@@ -10,13 +10,9 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Slide } from "../../components/onboarding/SlideIllustration";
-<<<<<<< HEAD
 import { Button } from "../../components/ui/Button";
 import { TextButton } from "../../components/ui/TextButton";
-import { SLIDES, THEME } from "../../constants/onboarding";
-=======
 import { SLIDES, THEME } from "../../constants/cons";
->>>>>>> ea794ea (login and sign up)
 import { useOnboarding } from "../../hooks/useOnboarding";
 
 export default function Onboarding() {
