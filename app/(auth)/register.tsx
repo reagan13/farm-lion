@@ -1,17 +1,13 @@
 import { KulimPark_400Regular } from "@expo-google-fonts/kulim-park";
 import { Unbounded_800ExtraBold, useFonts } from "@expo-google-fonts/unbounded";
 import { useRouter } from "expo-router";
-import {
-  ArrowLeft,
-  Eye,
-  EyeOff,
-  Lock,
-  Mail,
-  UserPlus,
-} from "lucide-react-native";
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
+import { ArrowLeft, Eye, EyeOff, Lock, Mail } from "lucide-react-native";
 import { MotiView } from "moti";
 import React from "react";
 import {
+  Alert,
   Image,
   KeyboardAvoidingView,
   Platform,
@@ -30,6 +26,8 @@ import { Button } from "../../components/ui/Button";
 import { THEME } from "../../constants/cons";
 import { useAppTheme } from "../../context/ThemeContext";
 import { useRegisterForm } from "../../hooks/useAuthForm";
+import { useGoogleAuth } from "../../hooks/useGoogleAuth";
+import { auth, db } from "../../services/firebaseConfig";
 
 const FarmingLionImg = require("../../assets/images/farming_lion.png");
 
@@ -61,20 +59,57 @@ export default function RegisterScreen() {
     isFormValid,
   } = useRegisterForm();
 
-  const handleRegister = () => {
-    console.log("Registering user:", { email, password });
+  const { request, promptAsync } = useGoogleAuth(
+    () => router.replace("/"),
+    (msg) => Alert.alert("Google Sign-In Error", msg),
+  );
+
+  const saveUserToFirestore = async (user: any) => {
+    try {
+      const userRef = doc(db, "users", user.uid);
+      const userSnap = await getDoc(userRef);
+      if (!userSnap.exists()) {
+        await setDoc(userRef, {
+          uid: user.uid,
+          email: user.email,
+          displayName: user.displayName || "Farmer",
+          role: "consumer",
+          location: "Mati City",
+          createdAt: serverTimestamp(),
+        });
+      }
+    } catch (error) {
+      console.error("Firestore Error:", error);
+    }
+  };
+
+  const handleManualRegister = async () => {
+    if (!isFormValid) return;
+    try {
+      const res = await createUserWithEmailAndPassword(auth, email, password);
+      await saveUserToFirestore(res.user);
+      router.replace("/");
+    } catch (error: any) {
+      let message = error.message;
+      if (error.code === "auth/email-already-in-use") {
+        message = "An account with this email already exists.";
+      } else if (error.code === "auth/invalid-email") {
+        message = "Please enter a valid email address.";
+      } else if (error.code === "auth/network-request-failed") {
+        message = "Network error. Please check your connection.";
+      }
+      Alert.alert("Registration Error", message);
+    }
   };
 
   if (!fontsLoaded) return null;
 
   return (
-    // Outer View fills the screen so the notification can be positioned absolute over everything
     <View style={styles.root}>
       <SafeAreaView
         style={[styles.container, { backgroundColor: C.background }]}
       >
         <AuthBackground C={C} />
-
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           style={{ flex: 1 }}
@@ -82,11 +117,8 @@ export default function RegisterScreen() {
           <ScrollView
             contentContainerStyle={{ flexGrow: 1, justifyContent: "center" }}
             scrollEnabled={isKeyboardVisible}
-            bounces={isKeyboardVisible}
-            showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
           >
-            {/* Back button */}
             <View style={styles.topBar}>
               <Pressable onPress={() => router.back()} style={styles.iconBtn}>
                 <ArrowLeft size={20} color={C.muted} strokeWidth={2} />
@@ -94,65 +126,45 @@ export default function RegisterScreen() {
             </View>
 
             <View style={styles.content}>
-              {/* Logo */}
-              <MotiView
-                from={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ type: "timing", duration: 700 }}
-                style={styles.imageHeader}
-              >
+              <View style={styles.imageHeader}>
                 <Image
                   source={FarmingLionImg}
                   style={styles.lionImage}
                   resizeMode="contain"
                 />
-              </MotiView>
-
-              {/* Heading */}
-              <View style={styles.textHeader}>
-                <MotiView
-                  from={{ opacity: 0, translateY: 10 }}
-                  animate={{ opacity: 1, translateY: 0 }}
-                  transition={{ delay: 200 }}
-                >
-                  <Text
-                    style={[
-                      styles.greetingText,
-                      { color: C.muted, fontFamily: "KulimPark_400Regular" },
-                    ]}
-                  >
-                    Join us today,
-                  </Text>
-                  <Text
-                    style={[
-                      styles.title,
-                      {
-                        color: C.foreground,
-                        fontFamily: "Unbounded_800ExtraBold",
-                      },
-                    ]}
-                  >
-                    Sign Up
-                  </Text>
-                  <Text
-                    style={[
-                      styles.subtitle,
-                      { color: C.muted, fontFamily: "KulimPark_400Regular" },
-                    ]}
-                  >
-                    Secure your academic journey now.
-                  </Text>
-                </MotiView>
               </View>
 
-              {/* Form */}
-              <MotiView
-                from={{ opacity: 0, translateY: 20 }}
-                animate={{ opacity: 1, translateY: 0 }}
-                transition={{ delay: 300 }}
-                style={styles.form}
-              >
-                {/* Email */}
+              <View style={styles.textHeader}>
+                <Text
+                  style={[
+                    styles.greetingText,
+                    { color: C.muted, fontFamily: "KulimPark_400Regular" },
+                  ]}
+                >
+                  Join us today,
+                </Text>
+                <Text
+                  style={[
+                    styles.title,
+                    {
+                      color: C.foreground,
+                      fontFamily: "Unbounded_800ExtraBold",
+                    },
+                  ]}
+                >
+                  Sign Up
+                </Text>
+                <Text
+                  style={[
+                    styles.subtitle,
+                    { color: C.muted, fontFamily: "KulimPark_400Regular" },
+                  ]}
+                >
+                  Start your farming trade journey.
+                </Text>
+              </View>
+
+              <View style={styles.form}>
                 <AuthInput
                   icon={Mail}
                   placeholder="Email Address"
@@ -164,7 +176,6 @@ export default function RegisterScreen() {
                   fontsLoaded={fontsLoaded}
                 />
 
-                {/* Password */}
                 <AuthInput
                   icon={Lock}
                   placeholder="Password"
@@ -189,7 +200,6 @@ export default function RegisterScreen() {
                   }
                 />
 
-                {/* Confirm password */}
                 <View>
                   <AuthInput
                     icon={Lock}
@@ -215,8 +225,8 @@ export default function RegisterScreen() {
                   />
                   {passwordsMismatch && (
                     <MotiView
-                      from={{ opacity: 0, translateY: -4 }}
-                      animate={{ opacity: 1, translateY: 0 }}
+                      from={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
                       style={styles.errorRow}
                     >
                       <Text
@@ -231,16 +241,14 @@ export default function RegisterScreen() {
                   )}
                 </View>
 
-                {/* Register button */}
                 <View style={styles.buttonContainer}>
                   <Button
                     label="Create Account"
-                    onPress={handleRegister}
+                    onPress={handleManualRegister}
                     disabled={!isFormValid}
                     variant="primary"
                     size="lg"
                     fullWidth
-                    iconRight={<UserPlus size={18} color="#FFF" />}
                     style={{
                       height: 56,
                       borderRadius: 16,
@@ -249,7 +257,6 @@ export default function RegisterScreen() {
                   />
                 </View>
 
-                {/* Divider */}
                 <View style={styles.dividerContainer}>
                   <View
                     style={[styles.divider, { backgroundColor: C.border }]}
@@ -267,13 +274,17 @@ export default function RegisterScreen() {
                   />
                 </View>
 
-                {/* Google */}
                 <Pressable
                   style={[
                     styles.googleBtn,
-                    { backgroundColor: C.card, borderColor: C.border },
+                    {
+                      backgroundColor: C.card,
+                      borderColor: C.border,
+                      opacity: request ? 1 : 0.6,
+                    },
                   ]}
-                  onPress={() => {}}
+                  onPress={() => promptAsync()}
+                  disabled={!request}
                 >
                   <Image
                     source={{
@@ -293,29 +304,11 @@ export default function RegisterScreen() {
                     Sign up with Google
                   </Text>
                 </Pressable>
-
-                {/* Login link */}
-                <Pressable
-                  onPress={() => router.push("/(auth)/login")}
-                  style={styles.footerLink}
-                >
-                  <Text
-                    style={[
-                      styles.footerText,
-                      { color: C.muted, fontFamily: "KulimPark_400Regular" },
-                    ]}
-                  >
-                    Already have an account?{" "}
-                    <Text style={{ color: C.accent }}>Login</Text>
-                  </Text>
-                </Pressable>
-              </MotiView>
+              </View>
             </View>
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
-
-      {/* Push notification — rendered OUTSIDE SafeAreaView so it truly overlays everything */}
       <PasswordStrengthIndicator
         password={password}
         visible={passwordFocused || password.length > 0}
@@ -361,6 +354,4 @@ const styles = StyleSheet.create({
   },
   googleIcon: { width: 20, height: 20 },
   googleText: { fontSize: 15 },
-  footerLink: { alignItems: "center", marginTop: 5 },
-  footerText: { fontSize: 14 },
 });

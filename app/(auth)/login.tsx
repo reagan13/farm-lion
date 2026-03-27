@@ -1,7 +1,8 @@
 import { KulimPark_400Regular } from "@expo-google-fonts/kulim-park";
 import { Unbounded_800ExtraBold, useFonts } from "@expo-google-fonts/unbounded";
 import { useRouter } from "expo-router";
-import { ArrowLeft, Eye, EyeOff, Lock, LogIn, Mail } from "lucide-react-native";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { ArrowLeft, Eye, EyeOff, Lock, Mail } from "lucide-react-native";
 import { MotiView } from "moti";
 import React from "react";
 import {
@@ -23,6 +24,8 @@ import { Button } from "../../components/ui/Button";
 import { THEME } from "../../constants/cons";
 import { useAppTheme } from "../../context/ThemeContext";
 import { useLoginForm } from "../../hooks/useAuthForm";
+import { useGoogleAuth } from "../../hooks/useGoogleAuth";
+import { auth } from "../../services/firebaseConfig";
 
 const FarmingLionImg = require("../../assets/images/farming_lion.png");
 
@@ -48,14 +51,33 @@ export default function LoginScreen() {
     isKeyboardVisible,
   } = useLoginForm();
 
+  const { request, promptAsync } = useGoogleAuth(
+    () => router.replace("/"),
+    (msg) => Alert.alert("Google Sign-In Error", msg),
+  );
+
   const handleLogin = async () => {
     if (!email || !password)
       return Alert.alert("Error", "Please fill all fields");
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
       router.replace("/");
-    }, 1500);
+    } catch (error: any) {
+      let message = error.message;
+      if (error.code === "auth/invalid-credential") {
+        message = "Incorrect email or password.";
+      } else if (error.code === "auth/user-not-found") {
+        message = "No account found with this email.";
+      } else if (error.code === "auth/wrong-password") {
+        message = "Incorrect password.";
+      } else if (error.code === "auth/network-request-failed") {
+        message = "Network error. Please check your connection.";
+      }
+      Alert.alert("Login Error", message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (!fontsLoaded) return null;
@@ -195,7 +217,6 @@ export default function LoginScreen() {
                   variant="primary"
                   size="lg"
                   fullWidth
-                  iconRight={<LogIn size={18} color="#FFF" />}
                   style={{ height: 56, borderRadius: 16 }}
                 />
               </View>
@@ -218,9 +239,14 @@ export default function LoginScreen() {
               <Pressable
                 style={[
                   styles.googleBtn,
-                  { backgroundColor: C.card, borderColor: C.border },
+                  {
+                    backgroundColor: C.card,
+                    borderColor: C.border,
+                    opacity: request ? 1 : 0.6,
+                  },
                 ]}
-                onPress={() => {}}
+                onPress={() => promptAsync()}
+                disabled={!request}
               >
                 <Image
                   source={{

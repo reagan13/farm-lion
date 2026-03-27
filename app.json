@@ -3,47 +3,34 @@
     "name": "mati-ecom",
     "slug": "mati-ecom",
     "version": "1.0.0",
-    "orientation": "portrait",
-    "icon": "./assets/images/farming_lion.png",
     "scheme": "matiecom",
+    "icon": "./assets/images/farming_lion.png",
     "userInterfaceStyle": "automatic",
     "ios": {
+      "bundleIdentifier": "demo.app",
       "supportsTablet": true
     },
     "android": {
+      "package": "demo.app",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/farming_lion.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
-      },
-      "predictiveBackGestureEnabled": false
+        "foregroundImage": "./assets/images/farming_lion.png"
+      }
     },
     "web": {
-      "output": "static",
-      "favicon": "./assets/images/farming_lion.png"
+      "output": "static"
     },
     "plugins": [
       "expo-router",
-      [
-        "expo-splash-screen",
-        {
-          "image": "./assets/images/farming_lion.png",
-          "imageWidth": 200,
-          "resizeMode": "contain",
-          "backgroundColor": "#0B1120",
-          "dark": {
-            "backgroundColor": "#0B1120"
-          }
-        }
-      ],
       "expo-font",
       "expo-image",
       "expo-web-browser"
     ],
-    "experiments": {
-      "typedRoutes": true,
-      "reactCompiler": true
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "46ca8665-47a4-4f08-bca4-51d6dc4bef83"
+      }
     }
   }
 }

@@ -46,7 +46,7 @@ export const AuthInput = ({
     onBlur?.();
   };
 
-  const lineColor = error ? "#EF4444" : C.accent;
+  const activeColor = error ? "#EF4444" : C.accent;
 
   return (
     <View style={styles.inputContainer}>
@@ -81,21 +81,30 @@ export const AuthInput = ({
           { backgroundColor: error ? "#EF4444" : C.border },
         ]}
       />
+
       <MotiView
-        animate={{ scaleX: isFocused ? 1 : 0, opacity: isFocused ? 1 : 0 }}
+        animate={{
+          scaleX: isFocused || error ? 1 : 0,
+          opacity: isFocused || error ? 1 : 0,
+        }}
         transition={{
           type: "timing",
           duration: 350,
           easing: Easing.out(Easing.quad),
         }}
-        style={[styles.animatedLine, { backgroundColor: lineColor }]}
+        style={[styles.animatedLine, { backgroundColor: activeColor }]}
       />
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  inputContainer: { width: "100%", height: 44, position: "relative" },
+  inputContainer: {
+    width: "100%",
+    height: 44,
+    position: "relative",
+    marginBottom: 10,
+  },
   inputContent: {
     flexDirection: "row",
     alignItems: "center",
@@ -111,5 +120,10 @@ const styles = StyleSheet.create({
     bottom: 0,
     opacity: 0.3,
   },
-  animatedLine: { height: 2, width: "100%", position: "absolute", bottom: 0 },
+  animatedLine: {
+    height: 2,
+    width: "100%",
+    position: "absolute",
+    bottom: 0,
+  },
 });
