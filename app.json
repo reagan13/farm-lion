@@ -7,15 +7,16 @@
     "icon": "./assets/images/farming_lion.png",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "bundleIdentifier": "demo.app",
+      "bundleIdentifier": "com.farminglegion.app",
       "supportsTablet": true
     },
     "android": {
-      "package": "demo.app",
+      "package": "farminglegion.com",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/farming_lion.png"
-      }
+      },
+      "permissions": ["CAMERA"]
     },
     "web": {
       "output": "static"
@@ -24,7 +25,13 @@
       "expo-router",
       "expo-font",
       "expo-image",
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow Mati Ecom to access your camera to scan QR codes."
+        }
+      ]
     ],
     "extra": {
       "router": {},
